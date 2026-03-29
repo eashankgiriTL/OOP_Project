@@ -11,9 +11,9 @@ public class ReceptionMedicineCounter {
     public ReceptionMedicineCounter(String billID, String patientID, double fee, double medicineCharges, double roomCharges) {
         this.billID = billID;
         this.patientID = patientID;
-        this.fee = fee;
-        this.medicineCharges = medicineCharges;
-        this.roomCharges = roomCharges;
+        setFee(fee);
+        setMedicineCharges(medicineCharges);
+        setRoomCharges(roomCharges);
         this.totalAmount = 0.0;
     }
 
@@ -24,13 +24,22 @@ public class ReceptionMedicineCounter {
     public void setPatientID(String patientID) { this.patientID = patientID; }
 
     public double getFee() { return fee; }
-    public void setFee(double fee) { this.fee = fee; }
+    public void setFee(double fee) {
+        if (fee < 0) throw new IllegalArgumentException("Consultation fee cannot be negative.");
+        this.fee = fee;
+    }
 
     public double getMedicineCharges() { return medicineCharges; }
-    public void setMedicineCharges(double medicineCharges) { this.medicineCharges = medicineCharges; }
+    public void setMedicineCharges(double medicineCharges) {
+        if (medicineCharges < 0) throw new IllegalArgumentException("Medicine charges cannot be negative.");
+        this.medicineCharges = medicineCharges;
+    }
 
     public double getRoomCharges() { return roomCharges; }
-    public void setRoomCharges(double roomCharges) { this.roomCharges = roomCharges; }
+    public void setRoomCharges(double roomCharges) {
+        if (roomCharges < 0) throw new IllegalArgumentException("Room charges cannot be negative.");
+        this.roomCharges = roomCharges;
+    }
 
     public double getTotalAmount() { return totalAmount; }
 

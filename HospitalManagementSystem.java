@@ -1,6 +1,8 @@
 import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.Scanner;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 public class HospitalManagementSystem {
 
@@ -11,6 +13,7 @@ public class HospitalManagementSystem {
     static ArrayList<ReceptionMedicineCounter> bills = new ArrayList<>();
 
     static Scanner sc = new Scanner(System.in);
+    private static final int MAX_TEXT_LENGTH = 60;
 
     public static void main(String[] args) {
         while (true) {
@@ -50,7 +53,7 @@ public class HospitalManagementSystem {
                 System.out.println("Invalid input type! Please enter a number.");
                 sc.nextLine(); // clear buffer
             } catch (Exception e) {
-                System.out.println("Error: " + e.getMessage());
+                System.out.println("Unexpected error occurred. Please try again.");
             }
         }
     }
@@ -92,26 +95,20 @@ public class HospitalManagementSystem {
     }
 
     static void registerPatient() {
-        System.out.print("Enter Patient ID: ");
-        String id = sc.nextLine().trim();
+        String id = readId("Enter Patient ID: ");
 
         if (findPatientById(id) != null) {
             System.out.println("Patient ID already exists!");
             return;
         }
 
-        System.out.print("Enter Name: ");
-        String name = sc.nextLine().trim();
+        String name = readBoundedText("Enter Name: ");
 
-        System.out.print("Enter Age: ");
-        int age = sc.nextInt();
-        sc.nextLine();
+        int age = readAge("Enter Age: ");
 
-        System.out.print("Enter Gender: ");
-        String gender = sc.nextLine().trim();
+        String gender = readGender("Enter Gender (Male/Female/Other): ");
 
-        System.out.print("Enter Disease: ");
-        String disease = sc.nextLine().trim();
+        String disease = readBoundedText("Enter Disease: ");
 
         Patient p = new Patient(id, name, age, gender, disease);
         patients.add(p);
@@ -187,26 +184,20 @@ public class HospitalManagementSystem {
     }
 
     static void addDoctor() {
-        System.out.print("Enter Doctor ID: ");
-        String id = sc.nextLine().trim();
+        String id = readId("Enter Doctor ID: ");
 
         if (findDoctorById(id) != null) {
             System.out.println("Doctor ID already exists!");
             return;
         }
 
-        System.out.print("Enter Name: ");
-        String name = sc.nextLine().trim();
+        String name = readBoundedText("Enter Name: ");
 
-        System.out.print("Enter Specialization: ");
-        String spec = sc.nextLine().trim();
+        String spec = readBoundedText("Enter Specialization: ");
 
-        System.out.print("Is Doctor Available? (true/false): ");
-        boolean available = sc.nextBoolean();
-        sc.nextLine();
+        boolean available = readYesNo("Is Doctor Available? (yes/no): ");
 
-        System.out.print("Enter Gender (Male/Female): ");
-        String gender = sc.nextLine().trim();
+        String gender = readGender("Enter Gender (Male/Female/Other): ");
 
         Doctor d = new Doctor(id, name, spec, available, gender);
         doctors.add(d);
@@ -278,19 +269,16 @@ public class HospitalManagementSystem {
     }
 
     static void createConsultation() {
-        System.out.print("Enter Appointment ID: ");
-        String appId = sc.nextLine().trim();
+        String appId = readId("Enter Appointment ID: ");
 
         if (findConsultationById(appId) != null) {
             System.out.println("Appointment ID already exists!");
             return;
         }
 
-        System.out.print("Enter Appointment Date (DD-MM-YYYY): ");
-        String date = sc.nextLine().trim();
+        String date = readDate("Enter Appointment Date (YYYY-MM-DD): ");
 
-        System.out.print("Enter Patient ID: ");
-        String pid = sc.nextLine().trim();
+        String pid = readId("Enter Patient ID: ");
 
         Patient p = findPatientById(pid);
         if (p == null) {
@@ -298,8 +286,7 @@ public class HospitalManagementSystem {
             return;
         }
 
-        System.out.print("Enter Doctor ID: ");
-        String did = sc.nextLine().trim();
+        String did = readId("Enter Doctor ID: ");
 
         Doctor d = findDoctorById(did);
         if (d == null) {
@@ -370,16 +357,14 @@ public class HospitalManagementSystem {
     }
 
     static void generateBill() {
-        System.out.print("Enter Bill ID: ");
-        String billId = sc.nextLine().trim();
+        String billId = readId("Enter Bill ID: ");
 
         if (findBillById(billId) != null) {
             System.out.println("Bill ID already exists!");
             return;
         }
 
-        System.out.print("Enter Patient ID: ");
-        String pid = sc.nextLine().trim();
+        String pid = readId("Enter Patient ID: ");
 
         Patient p = findPatientById(pid);
         if (p == null) {
@@ -387,15 +372,9 @@ public class HospitalManagementSystem {
             return;
         }
 
-        System.out.print("Enter Consultation Fee: ");
-        double fee = sc.nextDouble();
-
-        System.out.print("Enter Medicine Charges: ");
-        double med = sc.nextDouble();
-
-        System.out.print("Enter Room Charges: ");
-        double room = sc.nextDouble();
-        sc.nextLine();
+        double fee = readNonNegativeDouble("Enter Consultation Fee: ");
+        double med = readNonNegativeDouble("Enter Medicine Charges: ");
+        double room = readNonNegativeDouble("Enter Room Charges: ");
 
         ReceptionMedicineCounter b = new ReceptionMedicineCounter(billId, pid, fee, med, room);
         b.generateBill();
@@ -421,6 +400,99 @@ public class HospitalManagementSystem {
         for (ReceptionMedicineCounter b : bills) {
             b.displayBill();
             System.out.println("-------------------");
+        }
+    }
+
+    static String readBoundedText(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String value = sc.nextLine().trim();
+            if (value.isEmpty()) {
+                System.out.println("Input cannot be empty.");
+                continue;
+            }
+            if (value.length() > MAX_TEXT_LENGTH) {
+                System.out.println("Input is too long. Maximum " + MAX_TEXT_LENGTH + " characters.");
+                continue;
+            }
+            return value;
+        }
+    }
+
+    static String readId(String prompt) {
+        while (true) {
+            String id = readBoundedText(prompt);
+            if (!id.matches("[A-Za-z0-9_-]+")) {
+                System.out.println("ID can contain only letters, numbers, underscore and hyphen.");
+                continue;
+            }
+            return id;
+        }
+    }
+
+    static int readAge(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                int age = Integer.parseInt(sc.nextLine().trim());
+                if (age < 0 || age > 130) {
+                    System.out.println("Age must be between 0 and 130.");
+                    continue;
+                }
+                return age;
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid age. Please enter a whole number.");
+            }
+        }
+    }
+
+    static String readGender(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String value = sc.nextLine().trim();
+            if (value.equalsIgnoreCase("male")) return "Male";
+            if (value.equalsIgnoreCase("female")) return "Female";
+            if (value.equalsIgnoreCase("other")) return "Other";
+            System.out.println("Please enter Male, Female, or Other.");
+        }
+    }
+
+    static boolean readYesNo(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String value = sc.nextLine().trim();
+            if (value.equalsIgnoreCase("yes") || value.equalsIgnoreCase("y")) return true;
+            if (value.equalsIgnoreCase("no") || value.equalsIgnoreCase("n")) return false;
+            System.out.println("Please enter yes or no.");
+        }
+    }
+
+    static String readDate(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String value = sc.nextLine().trim();
+            try {
+                LocalDate date = LocalDate.parse(value);
+                return date.toString();
+            } catch (DateTimeParseException e) {
+                System.out.println("Invalid date format. Use YYYY-MM-DD.");
+            }
+        }
+    }
+
+    static double readNonNegativeDouble(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                double value = Double.parseDouble(sc.nextLine().trim());
+                if (value < 0) {
+                    System.out.println("Amount cannot be negative.");
+                    continue;
+                }
+                return value;
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid amount. Please enter a valid number.");
+            }
         }
     }
 }
